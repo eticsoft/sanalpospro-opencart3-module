@@ -1,0 +1,170 @@
+<style>
+[data-sanalpospro-wrapper] {
+    font-family: Arial, Helvetica, sans-serif;
+    max-width: 700px;
+    margin: 0;
+    padding: 15px;
+    background-color: #f8f9fa;
+    border-radius: 8px;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.05);
+    font-size: 1em;
+}
+
+[data-sanalpospro-container] {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 15px;
+    margin-bottom: 15px;
+}
+
+[data-sanalpospro-card] {
+    flex: 1 1 250px;
+    background-color: #fff;
+    border-radius: 8px;
+    overflow: hidden;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+[data-sanalpospro-card-header] {
+    padding: 10px;
+    background-color: #f8f9fa;
+    border-bottom: 1px solid #e9ecef;
+    text-align: center;
+}
+
+[data-sanalpospro-card-body] {
+    padding: 10px;
+}
+
+[data-sanalpospro-card] table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 1em;
+}
+
+[data-sanalpospro-card] table th,
+[data-sanalpospro-card] table td {
+    padding: 6px 8px;
+    text-align: left;
+    border-bottom: 1px solid #e9ecef;
+}
+
+[data-sanalpospro-card] table th {
+    font-weight: 600;
+    color: #495057;
+}
+
+[data-sanalpospro-card] table tr:last-child td {
+    border-bottom: none;
+}
+
+[data-sanalpospro-card] table tr:hover td {
+    background-color: #f8f9fa;
+}
+
+/* Responsive Styles */
+@media (max-width: 768px) {
+    [data-sanalpospro-wrapper] {
+        padding: 10px;
+        font-size: 13px;
+    }
+    
+    [data-sanalpospro-container] {
+        gap: 10px;
+    }
+    
+    [data-sanalpospro-card] {
+        flex: 1 1 100%;
+    }
+    
+    [data-sanalpospro-card] table th,
+    [data-sanalpospro-card] table td {
+        padding: 5px;
+        font-size: 12px;
+    }
+}
+
+[data-sanalpospro-note] {
+    background: #f8f9fa;
+    padding: 0.5rem;
+    border-radius: 4px;
+    font-size: 1em;
+    color: #666;
+    border: 1px solid #dedede;
+    margin-top: 10px;
+}
+
+/* Tablo için ek düzenlemeler */
+[data-sanalpospro-table] {
+    font-size: 1em;
+    width: 100%;
+}
+
+[data-sanalpospro-table] td {
+    padding: 5px 8px;
+} 
+</style>
+<div data-sanalpospro-wrapper id="tab-sanalpospro-installments" class="tab-pane fade mb-4" role="tabpanel">
+	<div data-sanalpospro-container  id="sanalpospro-installments">
+		{% for family, installment in installments %}
+			<div data-sanalpospro-card class="sanalpospro-installment {{ family }}">
+				<table data-sanalpospro-table style="width:100%;">
+					<thead>
+						<tr>
+							<td colspan="3" style="text-align:center;">
+								<img src="https://cdn.paythor.com/assets/cards/{{ family }}.png" height="50px" alt="{{ family }}">
+							</td>
+						</tr>
+						<tr>
+							<td style="width:33.33%; text-align:center;">
+								{{ text_installment_count }}
+							</td>
+							<td style="width:33.33%; text-align:center;">
+								{{ text_monthly_payment }}
+							</td>
+							<td style="width:33.33%; text-align:center;">
+								{{ text_total }}
+							</td>
+						</tr>
+					</thead>
+					<tbody>
+
+						{% for rate in installment %}
+							{% set installment_count = loop.index %}
+							{% if installment_count == 1 and rate.buyer_fee_percent == 0 %}
+								{% set total_amount = sanalpospro_price %}
+								{% set monthly_payment = total_amount %}
+							{% elseif installment_count != 1 and rate.buyer_fee_percent == 0 %}
+								{% set total_amount = sanalpospro_price %}
+								{% set monthly_payment = total_amount / installment_count %}
+							{% else %}
+								{% set total_amount = sanalpospro_price * (1 + rate.buyer_fee_percent / 100) %}
+								{% set monthly_payment = total_amount / installment_count %}
+							{% endif %}
+
+							{% if rate.gateway != 'off' %}
+								<tr>
+									<td style="text-align:center;">{{ installment_count }}</td>
+									<td style="text-align:center;">{{ monthly_payment|number_format(2, ',', '.') }}
+										{{ currency }}</td>
+									<td style="text-align:center;">{{ total_amount|number_format(2, ',', '.') }}
+										{{ currency }}</td>
+								</tr>
+							{% else %}
+								<tr>
+									<td style="text-align:center;">{{ installment_count }}</td>
+									<td style="text-align:center;">-</td>
+									<td style="text-align:center;">-</td>
+								</tr>
+							{% endif %}
+						{% endfor %}
+
+					</tbody>
+				</table>
+			</div>
+		{% endfor %}
+	</div>
+	 <div data-sanalpospro-note>
+        <p>{{text_note}}</p>
+    </div>
+</div> 

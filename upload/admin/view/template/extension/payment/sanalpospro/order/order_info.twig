@@ -1,0 +1,64 @@
+<div>
+    <div class="text-center">
+        <img width="350" src="{{ logo }}" alt="Sanal Pos Pro">
+    </div>
+	{% if transaction is defined %}
+		<div style="text-align: center; padding: 1rem; background-color: #fff3cd; border: 1px solid #ffeeba; color: #856404; border-radius: 4px; margin-bottom: 1rem;margin-top: 1rem;">
+			<strong>
+				<h3>{{ warning_message }}</h3>
+			</strong>
+		</div>
+		<table class="table table-bordered">
+			<thead>
+				<tr>
+					<th>{{ text_process_detail }}</th>
+					<th>{{ text_process_value }}</th>
+				</tr>
+			</thead>
+			<tbody>
+				<tr>
+					<td>{{ text_order_id }}</td>
+					<td>{{ transaction.id }}</td>
+				</tr>
+				<tr>
+					<td>{{ text_amount }}</td>
+					<td>{{ transaction.amount }}</td>
+				</tr>
+				{% if process_fee is defined and process_fee is not empty %}
+					<tr>
+						<td>{{ text_process_fee }}</td>
+						<td>{{ process_fee }}</td>
+					</tr>
+				{% endif %}
+				<tr>
+					<td>{{ text_captured }}</td>
+					<td>{{ transaction.captured }}</td>
+				</tr>
+				<tr>
+					<td>{{ text_currency }}</td>
+					<td>{{ transaction.currency }}</td>
+				</tr>
+				
+				<tr>
+					<td>{{ text_order_status }}</td>
+					<td>{{ order_status }}</td>
+				</tr>
+				<tr>
+					<td>{{ text_created_at }}</td>
+					<td>{{ transaction.created_at|date("d.m.Y H:i:s") }}</td>
+				</tr>
+			</tbody>
+		</table>
+	{% else %}
+		{% if error is defined %}
+			<div class="alert alert-danger">{{ error }}</div>
+		{% else %}
+			<div class="alert alert-info">İşlem detayı bulunamadı.</div>
+		{% endif %}
+	{% endif %}
+</div>
+<style>
+	.text-center {
+		text-align: center;
+	}
+</style> 
