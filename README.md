@@ -1,5 +1,13 @@
 # Opencart 3 SanalPOS PRO Ödeme Modülü
 
+![Desteklenen PHP Sürümü](https://img.shields.io/badge/PHP-%3E%3D7.4-purple)
+![Desteklenen OpenCart Sürümü](https://img.shields.io/badge/OpenCart-%3E%3D3.0.3-blue)
+
+
+> ⚠️ **Önemli Bilgilendirme:** Bu eklenti **PHP 7.4+** ve **OpenCart 3.0.3+** sürümlerinde çalışmaktadır.  
+> Daha düşük bir PHP veya OpenCart sürümü kullanıyorsanız **çalışmayacaktır**.
+> Eğer Opencart 4 kullanıyorsanız **[bu linkteki](https://github.com/eticsoft/sanalpospro-opencart4-module)** eklentimizi kurarak devam ediniz.
+
 Opencart, e-ticaret siteleri için popüler bir açık kaynaklı platformdur. SanalPOS PRO ödeme modülü ile müşterilerinize güvenli ödeme seçenekleri sunabilirsiniz. 
 Aşağıda, SanalPOS PRO modül kurulum sürecini adım adım anlatan bir kılavuz bulunmaktadır.
 
