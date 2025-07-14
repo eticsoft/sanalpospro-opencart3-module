@@ -32,4 +32,4 @@ $_['no']    = 'Hayır';
 $_['classic']    = 'Klasik';
 $_['modern']    = 'Modern';
 
-$_['php_version_warning']    = 'PHP sürümünüz 7.4 veya üzeri olmalıdır. Eklentimizi kullanabilmek için lütfen PHP sürümünüzü güncelleyiniz.'; 
+$_['php_version_warning']    = 'Sanal Pos Pro eklentisini yüklerken bir hata oluştu. PHP sürümünüz 7.4 veya üzeri olmalıdır. Eklentimizi kullanabilmek için lütfen PHP sürümünüzü güncelleyiniz.'; 

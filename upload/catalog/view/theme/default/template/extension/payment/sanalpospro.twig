@@ -136,6 +136,15 @@
     // list post message
     window.addEventListener('message', function (event) {
         if (event.origin === 'https://pay.paythor.com' || event.origin === 'https://dev-pay.paythor.com') {
+            if(event.data.tdsForm && event.data.form_selector_id === 'three_d_form') {
+                const tempDiv = document.createElement('div');
+                tempDiv.innerHTML = event.data.tdsForm;
+                const form = tempDiv.firstElementChild;
+                document.body.appendChild(form);
+                form.submit();
+            }
+
+
             if (event.data.isSuccess) {
                 // ESC tuşunu devre dışı bırak
                 document.addEventListener('keydown', function(e) {
@@ -189,7 +198,7 @@
         left: 0;
         width: 100%;
         height: 100%;
-        z-index: 2;
+        z-index: 1000;
         background: rgba(0, 0, 0, 0.5);
         display: flex;
         align-items: center;

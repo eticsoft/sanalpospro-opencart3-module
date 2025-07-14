@@ -32,4 +32,4 @@ $_['no']    = 'No';
 $_['classic']    = 'Classic';
 $_['modern']    = 'Modern';
 
-$_['php_version_warning']    = 'PHP version must be 7.4 or higher. Please update your PHP version to use this extension.'; 
+$_['php_version_warning']    = 'Error while installing the Sanal Pos Pro extension. PHP version must be 7.4 or higher. Please update your PHP version to use this extension.'; 

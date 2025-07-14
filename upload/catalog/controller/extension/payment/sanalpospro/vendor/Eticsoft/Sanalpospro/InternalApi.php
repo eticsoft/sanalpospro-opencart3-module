@@ -209,9 +209,9 @@ class InternalApi
                 $this->setResponse('error', 'Cart totals not found');
                 return $this;
             }
-
-            $cart_total = $cart_totals['total'];
-            $discount = abs($cart_totals['coupon']);
+            
+            $cart_total = round($cart_totals['total'], 2);
+            $discount = round(abs($cart_totals['coupon']), 2);
             $shipping_cost = EticTools::getShippingCost();
 
             // Create Cart instance

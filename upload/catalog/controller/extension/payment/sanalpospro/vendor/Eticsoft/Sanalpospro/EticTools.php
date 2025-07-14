@@ -88,13 +88,13 @@ class EticTools
         $cleared_taxes = [];
         foreach ($totals as $item) {
             if ($item['code'] === 'coupon') {
-                $coupon = $item['value'];
+                $coupon = self::getAmountCurrencyFormated($item['value']);
             }
             if ($item['code'] === 'tax') {
                 $cleared_taxes[] = $item;
             }
             if ($item['code'] === 'total') {
-                $total = $item['value'];
+                $total = self::getAmountCurrencyFormated($item['value']);
             }
         }
         $res = [
