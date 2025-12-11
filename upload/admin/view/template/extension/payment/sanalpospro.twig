@@ -12,10 +12,12 @@
         const iapi_base_url = iapi_url.replace(/&amp;/g, '&');
         const store_url = '{{store_url}}';
         const iapi_xfvv = '{{iapi_xfvv}}';
+
+        window.xfvv = iapi_xfvv;
+        window.storeUrl = store_url;
+        window.target_url = iapi_base_url;
         
-        const current_version = 1.7;
         let generalSettings = {
-            update_version: 8.0 > current_version,
             order_status: {
                 default_value:  {% if order_status != null  %} {{ order_status }}  {% else %} 0 {% endif %},
                 options: {{ order_statuses }}
@@ -42,23 +44,29 @@
                 }
             }
         }
+
+        window.generalSettings = generalSettings;
         </script>
-        <script type="module" crossorigin src="https://cdn.paythor.com/1/104/10.0.1/index.js"></script>
-        <link rel="stylesheet" crossorigin href="https://cdn.paythor.com/1/104/10.0.1/index.css">
-        <div id="paythor-container" data-platform="opencart" data-program-id="1" data-app-id="104"></div>
+        <script type="module" crossorigin src="https://cdn.paythor.com/1/104/10.0.2/index.js"></script>
+        <link rel="stylesheet" crossorigin href="https://cdn.paythor.com/1/104/10.0.2/index.css">
+        <div id="root" data-platform="opencart" data-program-id="1" data-app-id="104"></div>
     {% endif %}
     
 </div>
 <style>
+    html, body {
+        font-size: 14px !important;
+    }
     .etic-overflow-y-auto {
         overflow-y: auto;
     }
-
-    #paythor-container > div {
-        height: calc(100vh - 102px) !important;
-    }
-
     .etic-content {
         padding-bottom: 0;
+    }
+    #user-profile {
+        display: inline !important;
+    }
+    .collapse.in {
+        visibility: visible !important;
     }
 </style> 

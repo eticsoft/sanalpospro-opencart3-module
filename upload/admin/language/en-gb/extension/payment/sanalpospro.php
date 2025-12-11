@@ -7,7 +7,7 @@ $_['text_payment']       = 'Payment Methods';
 $_['text_success']       = 'Successful: updated virtual pos details!';
 $_['text_edit']          = 'Sanal Pos Pro Integration Information';
 $_['text_sanalpospro']   = '<a href="https://www.sanalpospro.com/" target="_blank">
-							<img width="100" src="https://sanalpospro.com/wp-content/uploads/2019/01/sanalpospro3d-logo-3-01.svg" alt="Sanal Pos Pro!" 
+							<img width="100" src="https://cdn.paythor.com/1/spp-logo.png" alt="Sanal Pos Pro!" 
 							title="Sanal Pos Pro" style="border: 1px solid #EEEEEE;" />
 							</a>';
 $_['text_extension']     = 'Extensions';
