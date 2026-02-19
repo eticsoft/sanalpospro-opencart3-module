@@ -14,7 +14,7 @@ class ControllerExtensionPaymentSanalpospro extends Controller
         $this->load->model('setting/setting');
         $this->load->model('setting/extension');
         $this->load->model('setting/event');
-        $this->version = "10.0.1";
+        $this->version = "10.0.4";
 
         // Event eklemek
         $this->model_setting_event->addEvent(
@@ -121,7 +121,7 @@ class ControllerExtensionPaymentSanalpospro extends Controller
         $settings[$key] = $value;
         $this->model_setting_setting->editSetting('payment_sanalpospro', $settings);
     }
-    public function iapi ()
+    public function iapi()
     {
         if (!isset($_SERVER['HTTP_REFERER']) || parse_url($_SERVER['HTTP_REFERER'], PHP_URL_HOST) !== $_SERVER['HTTP_HOST']) {
             header('Content-Type: application/json');
@@ -159,7 +159,7 @@ class ControllerExtensionPaymentSanalpospro extends Controller
             $transaction_id = end($comment_parts);
         }
         try {
-            if(empty($transaction_id)){
+            if (empty($transaction_id)) {
                 return;
             }
             $this->load->model('setting/setting');
@@ -199,4 +199,4 @@ class ControllerExtensionPaymentSanalpospro extends Controller
             'content' => $content
         ];
     }
-} 
+}
