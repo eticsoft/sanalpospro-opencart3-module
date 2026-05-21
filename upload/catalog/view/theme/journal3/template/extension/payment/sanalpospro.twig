@@ -1,56 +1,37 @@
 <div class="payment-container">
-    <div class="buttons">
-        <div class="end">
-            <button id="spp-payment-confirm" onclick="paythorPayment.handlePaymentRequest('{{ request_url }}')" class="btn btn-primary" >
-                <span id="button-text">{{ button_confirm }}</span> 
-                <span id="loading-text" class="loading-text d-none">
-                    <i class="fa-solid fa-circle-notch fa-spin text-light"></i>
-                </span>
-            </button>
+    <div id="payment-iframe-container" class="spp-iframe-inline">
+        <div class="spp-iframe-content">
+            <iframe id="spp-payment-iframe" src="about:blank" class="spp-payment-iframe"></iframe>
+            <div id="spp-iframe-loading" class="spp-iframe-loading">
+                <i class="fa-solid fa-circle-notch fa-spin"></i>
+            </div>
         </div>
+        <div id="spp-iframe-error" class="alert alert-danger d-none"></div>
     </div>
 </div>
-<script src="https://code.jquery.com/jquery-3.7.1.js"></script>
+{# <script src="https://code.jquery.com/jquery-3.7.1.js"></script> #}
 <script>
     const orderConfirmationUrl = '{{ order_confirmation_url }}';
     const SELECTORS = {
-        PAYMENT_IFRAME_CONTAINER: '#payment-iframe-container',
-        PAYMENT_IFRAME_CLOSE_BTN: '#payment-iframe-container-close-btn',
-        PAYMENT_MODULE: '.payment-options input[data-module-name="sanalpospro"]',
-        PAYMENT_CONTAINER: '.payment-container',
-        PAYMENT_CONFIRMATION: '#payment-confirmation'
+        PAYMENT_IFRAME: '#spp-payment-iframe',
+        PAYMENT_IFRAME_LOADING: '#spp-iframe-loading',
+        PAYMENT_IFRAME_ERROR: '#spp-iframe-error',
+        PAYMENT_CONTAINER: '.payment-container'
     };
 
     class PaymentHandler {
-        constructor() {
-            this.iframeContainer = null;
-            this.init();
+        constructor(requestUrl) {
+            this.requestUrl = requestUrl;
+            this.handlePaymentRequest();
         }
 
-        init() {
-            // Event delegation for dynamically created elements
-            document.body.addEventListener('click', (e) => {
-                if (e.target.matches(SELECTORS.PAYMENT_IFRAME_CLOSE_BTN)) {
-                    this.closeIframe();
-                }
-            });
-        }
-
-        closeIframe() {
-            const container = document.querySelector(SELECTORS.PAYMENT_IFRAME_CONTAINER);
-            if (container) {
-                container.remove();
-            }
-        }
-
-        async handlePaymentRequest(requestUrl) {
-            
+        async handlePaymentRequest() {
             try {
-                $("#spp-payment-confirm").prop("disabled", true); // Butonu devre dışı bırak
-                $("#button-text").addClass("d-none"); // Normal metni gizle
-                $("#loading-text").removeClass("d-none");
+                $(SELECTORS.PAYMENT_IFRAME_ERROR).addClass('d-none').html('');
+                $(SELECTORS.PAYMENT_IFRAME_LOADING).removeClass('d-none');
+
                 $.ajax({
-                    url: requestUrl,
+                    url: this.requestUrl,
                     type: 'POST',
                     data: {
                         iapi_action: 'createPaymentLink',
@@ -58,17 +39,11 @@
                         iapi_xfvv: '{{xfvv}}'
                     },
                     success: (response) => {
-                       
                         this.handlePaymentResponse(response);
                     },
                     error: (error) => {
-                        this.handlePaymentResponse(error.responseJSON)
+                        this.handlePaymentResponse(error.responseJSON);
                         console.error('Payment request failed:', error);
-                    },
-                    complete: function(data) {
-                        $("#spp-payment-confirm").prop("disabled", false); // Butonu tekrar aktif et
-                        $("#button-text").removeClass("d-none");
-                        $("#loading-text").addClass("d-none");
                     }
                 });
             } catch (error) {
@@ -88,50 +63,36 @@
         }
 
         handlePaymentResponse(response) {
-            if (response.status === "success") {
-                this.showPaymentIframe(response.data.payment_link);
+            if (response && response.status === "success") {
+                this.loadPaymentIframe(response.data.payment_link);
             } else {
-                if (response.details && Array.isArray(response.details)) {
-                    response.message += '<br>' + response.details.join('<br>');
+                let message = (response && response.message) ? response.message : 'Payment request failed';
+                if (response && response.details && Array.isArray(response.details)) {
+                    message += '<br>' + response.details.join('<br>');
                 }
-                this.showError(response.message);
+                this.showError(message);
             }
         }
 
-        showPaymentIframe(paymentLink) {
-            const iframeHTML = `
-            <div id="payment-iframe-container" class="spp-iframe-container">
-                <div class="spp-iframe-wrapper">
-                    <div class="spp-iframe-header">
-                    <button type="button" class="spp-close-iframe" onclick="document.getElementById('payment-iframe-container').remove()">
-                        ×            
-                    </button>
-                    </div>
-                    <div class="spp-iframe-content">
-                        <iframe src="${paymentLink}" class="spp-payment-iframe"></iframe>
-                    </div>
-                </div>
-            </div>
-        `;
-
-            document.body.insertAdjacentHTML('beforeend', iframeHTML);
+        loadPaymentIframe(paymentLink) {
+            const iframe = document.querySelector(SELECTORS.PAYMENT_IFRAME);
+            if (!iframe) {
+                return;
+            }
+            iframe.addEventListener('load', () => {
+                $(SELECTORS.PAYMENT_IFRAME_LOADING).addClass('d-none');
+            }, { once: true });
+            iframe.src = paymentLink;
         }
 
         showError(errorMessage) {
-            const errorHTML = `
-            <div class="alert alert-danger">
-                ${errorMessage}
-            </div>
-        `;
-
-            document.querySelector(SELECTORS.PAYMENT_CONTAINER).insertAdjacentHTML('beforeend', errorHTML);
+            $(SELECTORS.PAYMENT_IFRAME_LOADING).addClass('d-none');
+            $(SELECTORS.PAYMENT_IFRAME_ERROR).removeClass('d-none').html(errorMessage);
         }
-
-
     }
 
-    // Initialize the payment handler
-    var paythorPayment = new PaymentHandler();
+    // Initialize the payment handler immediately
+    var paythorPayment = new PaymentHandler('{{ request_url }}');
 
     // list post message
     window.addEventListener('message', function (event) {
@@ -149,8 +110,8 @@
                 // ESC tuşunu devre dışı bırak
                 document.addEventListener('keydown', function(e) {
                     if (e.key === 'Escape' || e.keyCode === 27 ||
-                        e.key === 'F5' || 
-                        (e.ctrlKey && e.key === 'r') || 
+                        e.key === 'F5' ||
+                        (e.ctrlKey && e.key === 'r') ||
                         (e.ctrlKey && e.shiftKey && e.key === 'r') ||
                         (e.metaKey && e.key === 'r') ||  // Mac için Command + R
                         (e.metaKey && e.shiftKey && e.key === 'r')  // Mac için Command + Shift + R
@@ -159,7 +120,6 @@
                         return false;
                     }
                 });
-                $('.spp-close-iframe').prop('disabled', true);
 
                 window.onbeforeunload = function() {
                     return "Ödeme işlemi devam ediyor.";
@@ -190,33 +150,30 @@
         }
     }, false);
 
-    // Add styles for the iframe overlay
+    // Add styles for the inline iframe
     const styles = `
-    .spp-iframe-container {
-        position: fixed;
-        top: 0;
-        left: 0;
+    .payment-container {
         width: 100%;
-        height: 100%;
-        z-index: 1000;
-        background: rgba(0, 0, 0, 0.5);
-        display: flex;
-        align-items: center;
-        justify-content: center;
+        max-width: 100%;
     }
 
-    .spp-iframe-wrapper { 
+    .popup-container,
+    .popup-container .popup-content,
+    .popup-container .popup-inner {
+        max-width: 1400px !important;
+        width: 95vw !important;
+    }
+
+    .spp-iframe-inline {
+        width: 100%;
+        margin-top: 15px;
+    }
+
+    .spp-iframe-content {
         position: relative;
-        width: 90%;
-        max-width: 900px;
-        height: 80vh;
-        max-height: 70%;
-        background: white;
-        border-radius: 10px;
-        overflow: hidden;
-        display: flex;
-        flex-direction: column;
-        box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+        width: 100%;
+        height: 85vh;
+        min-height: 700px;
     }
 
     .spp-payment-iframe {
@@ -225,34 +182,22 @@
         border: none;
     }
 
-    .spp-iframe-content {
-        flex: 1;
-        position: relative;
-    }
-
-    .spp-iframe-header {
-        display: flex;
-        justify-content: flex-end;
-        align-items: center;
-        padding: 10px 15px;
-        background-color: #f8f9fa;
-        border-bottom: 1px solid #e9ecef;
-    }
-
-    .spp-close-iframe {
-        background: none;
-        border: none;
-        font-size: 28px;
-        line-height: 1;
-        cursor: pointer;
-        color: #6c757d;
-        padding: 0;
-        width: 30px;
-        height: 30px;
+    .spp-iframe-loading {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
         display: flex;
         align-items: center;
         justify-content: center;
-        transition: color 0.2s;
+        background: #fff;
+        font-size: 32px;
+        color: #6c757d;
+    }
+
+    .spp-iframe-loading i {
+        animation: spin 1s linear infinite;
     }
 
     .alert-danger {
@@ -260,22 +205,13 @@
         background-color: #f8d7da;
         border-color: #f5c6cb;
         padding: 0.75rem 1.25rem;
-        margin-bottom: 1rem;
+        margin-top: 1rem;
         border: 1px solid transparent;
         border-radius: 0.25rem;
     }
 
     .d-none {
         display: none !important;
-    }
-
-    .loading-text {
-        display: inline-block;
-        margin-left: 5px;
-    }
-
-    .loading-text i {
-        animation: spin 1s linear infinite;
     }
 
     @keyframes spin {
@@ -288,4 +224,4 @@
     const styleSheet = document.createElement('style');
     styleSheet.textContent = styles;
     document.head.appendChild(styleSheet);
-</script> 
+</script>

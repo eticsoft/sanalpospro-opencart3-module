@@ -14,7 +14,7 @@ class ControllerExtensionPaymentSanalpospro extends Controller
         $this->load->model('setting/setting');
         $this->load->model('setting/extension');
         $this->load->model('setting/event');
-        $this->version = "10.0.4";
+        $this->version = "10.1.0";
 
         // Event eklemek
         $this->model_setting_event->addEvent(
@@ -145,18 +145,19 @@ class ControllerExtensionPaymentSanalpospro extends Controller
         }
 
         $order_history = $this->model_sale_order->getOrderHistories($order_id);
-        $last_history = [];
-        if (!empty($order_history)) {
-            $last_history = end($order_history);
+        $sanalpospro_history = null;
+        foreach ($order_history as $history) {
+            if (strpos($history['comment'], 'Sanal Pos Pro') !== false) {
+                $sanalpospro_history = $history;
+                break;
+            }
         }
-        if (empty($last_history) || !strpos($last_history['comment'], 'Sanal Pos Pro')) {
+        if (empty($sanalpospro_history)) {
             return;
         }
-
         $transaction_id = '';
-        if (!empty($last_history['comment'])) {
-            $comment_parts = explode(' ', trim($last_history['comment']));
-            $transaction_id = end($comment_parts);
+        if (preg_match('/Sanal Pos Pro\s+(\S+)/', $sanalpospro_history['comment'], $matches)) {
+            $transaction_id = $matches[1];
         }
         try {
             if (empty($transaction_id)) {
