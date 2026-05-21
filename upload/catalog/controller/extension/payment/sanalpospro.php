@@ -22,6 +22,10 @@ class ControllerExtensionPaymentSanalpospro extends Controller
 
     public function iapi ()
     {
+        if (isset($this->request->get['action']) && $this->request->get['action'] == 'callback') {
+            return $this->callback();
+        }
+
         if (isset($this->request->get['action']) && $this->request->get['action'] == 'confirmOrder') {
             return $this->confirmOrder();
         }
@@ -64,6 +68,84 @@ class ControllerExtensionPaymentSanalpospro extends Controller
         die(json_encode($api->response));
     }
 
+    private function callback() {
+        $nonce = $this->request->get['nonce'] ?? '';
+        if (empty($nonce) || $nonce !== $this->config->get('payment_sanalpospro_xfvv')) {
+            header('Content-Type: application/json');
+            header('HTTP/1.0 403 Forbidden');
+            die(json_encode(['status' => 'error', 'message' => 'Access denied']));
+        }
+
+        $requestData = json_decode(file_get_contents('php://input'), true);
+        if (!is_array($requestData)) {
+            header('Content-Type: application/json');
+            header('HTTP/1.0 400 Bad Request');
+            die(json_encode(['status' => 'error', 'message' => 'Invalid payload']));
+        }
+
+        $order_id = (int) ($requestData['oid'] ?? 0);
+        if (!$order_id) {
+            header('Content-Type: application/json');
+            header('HTTP/1.0 400 Bad Request');
+            die(json_encode(['status' => 'error', 'message' => 'Order id not found']));
+        }
+
+        $this->load->model('checkout/order');
+        $order = $this->model_checkout_order->getOrder($order_id);
+        if (empty($order)) {
+            header('Content-Type: application/json');
+            header('HTTP/1.0 404 Not Found');
+            die(json_encode(['status' => 'error', 'message' => 'Order not found']));
+        }
+
+        $paid_status_id = !empty($this->config->get('payment_sanalpospro_order_status')) ? (int) $this->config->get('payment_sanalpospro_order_status') : 2;
+        if ((int) $order['order_status_id'] === $paid_status_id) {
+            http_response_code(200);
+            header('Content-Type: application/json');
+            die(json_encode(['status' => 'success']));
+        }
+
+        $hash = $requestData['hash'] ?? '';
+        if (!$hash) {
+            header('Content-Type: application/json');
+            header('HTTP/1.0 400 Bad Request');
+            die(json_encode(['status' => 'error', 'message' => 'Hash not found']));
+        }
+
+        $this->logCallbackRequest($order_id, $requestData);
+
+        $this->session->data['order_id'] = $order_id;
+        $this->load->model('setting/setting');
+        $settings = $this->model_setting_setting;
+        $api = InternalApi::getInstance()->setController($this)->setSettings($settings);
+        $api->action = 'confirmOrder';
+        $api->isCallback = true;
+        $api->params['process_token'] = $hash;
+        $api->xfvv = $this->config->get('payment_sanalpospro_xfvv');
+        $api->call();
+
+        http_response_code(200);
+        header('Content-Type: application/json');
+        die(json_encode(['status' => 'success']));
+    }
+
+
+    private function logCallbackRequest($order_id, array $requestData) {
+        $logDir = DIR_LOGS . 'sanalpospro/';
+        if (!is_dir($logDir)) {
+            mkdir($logDir, 0755, true);
+        }
+
+        $logData = [
+            'timestamp' => date('Y-m-d H:i:s'),
+            'order_id'  => $order_id,
+            'ip'        => $_SERVER['REMOTE_ADDR'] ?? '',
+            'payload'   => $requestData,
+        ];
+
+        $filename = $logDir . 'callback_' . $order_id . '_' . date('Ymd_His') . '.json';
+        file_put_contents($filename, json_encode($logData, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE));
+    }
 
     public function addProductTab(&$route, &$data, &$output)
     {

@@ -51,9 +51,35 @@ class EticTools
         return self::getSessionData('order_id');
     }
 
+    public static function setOrderId($order_id)
+    {
+        self::$controller->session->data['order_id'] = (int) $order_id;
+    }
+
     public static function getOrder()
     {
         return self::getOrderInstance()->getOrder(self::getOrderId());
+    }
+
+    public static function getOrderById($order_id)
+    {
+        return self::getOrderInstance()->getOrder((int) $order_id);
+    }
+
+    public static function getDb()
+    {
+        return self::$controller->db;
+    }
+
+    public static function getPaidOrderStatusId()
+    {
+        return !empty(self::$controller->config->get('payment_sanalpospro_order_status')) ? (int) self::$controller->config->get('payment_sanalpospro_order_status') : 2;
+    }
+
+    public static function isOrderPaid($order_id)
+    {
+        $order = self::getOrderById($order_id);
+        return !empty($order) && (int) $order['order_status_id'] === self::getPaidOrderStatusId();
     }
 
     public static function getOrderInstance()
@@ -71,6 +97,35 @@ class EticTools
     public static function getCart()
     {
         return self::$controller->cart;
+    }
+
+    public static function clearCart()
+    {
+        self::$controller->cart->clear();
+        unset(self::$controller->session->data['shipping_method']);
+        unset(self::$controller->session->data['shipping_methods']);
+        unset(self::$controller->session->data['payment_method']);
+        unset(self::$controller->session->data['payment_methods']);
+        unset(self::$controller->session->data['coupon']);
+        unset(self::$controller->session->data['reward']);
+        unset(self::$controller->session->data['voucher']);
+        unset(self::$controller->session->data['vouchers']);
+        unset(self::$controller->session->data['order_id']);
+    }
+
+    public static function clearCartByOrderId($order_id)
+    {
+        $order = self::getOrderById($order_id);
+        if (empty($order)) {
+            return;
+        }
+
+        $db = self::getDb();
+        $customer_id = (int) $order['customer_id'];
+
+        if ($customer_id > 0) {
+            $db->query("DELETE FROM `" . DB_PREFIX . "cart` WHERE customer_id = '" . $customer_id . "'");
+        }
     }
 
     public static function getCartItems()
@@ -111,9 +166,9 @@ class EticTools
         return self::$controller->session->data['currency'] ?? self::$controller->config->get('config_currency');
     }
 
-    public static function getAmountCurrencyFormated($amount)
+    public static function getAmountCurrencyFormated($amount, $currency = null)
     {
-        return self::$controller->currency->format($amount, self::getCurrency(), false, false);
+        return self::$controller->currency->format($amount, $currency ?? self::getCurrency(), false, false);
     }
 
     public static function getShippingCost()
@@ -132,23 +187,29 @@ class EticTools
         self::$controller->response->redirect(self::$controller->url->link('checkout/cart'));
     }
 
-    public static function addCommissionFeeToTotal($order_id, $amount)
+    public static function addCommissionFeeToTotal($order_id, $amount, $order_currency = null)
     {
         self::$controller->load->language('extension/payment/sanalpospro');
         $title = self::$controller->language->get('commission_fee');
+
+        $default_currency = self::$controller->config->get('config_currency');
+        $currency = $order_currency ?? self::getCurrency();
+        $amount = self::$controller->currency->convert($amount, $currency, $default_currency);
+
         self::$controller->db->query("INSERT INTO `" . DB_PREFIX . "order_total` SET order_id = '" . (int)$order_id . "', code = 'fee', title = '" . $title . "', value = '" . (float)$amount . "', sort_order = '4'");
         self::$controller->db->query("UPDATE `" . DB_PREFIX . "order_total` SET value = value + '" . (float)$amount . "' WHERE order_id = '" . (int)$order_id . "' AND code = 'total'");
         self::$controller->db->query("UPDATE `" . DB_PREFIX . "order` SET total = total + '" . (float)$amount . "' WHERE order_id = '" . (int)$order_id . "'");
     }
 
-    public static function addOrderHistory($payment_token)
+    public static function addOrderHistory($payment_token, bool $isCallback = false)
     {
         self::$controller->load->model('checkout/order');
         self::$controller->load->language('extension/payment/sanalpospro');
+        $flowType = $isCallback ? '[Callback]' : '[Normal]';
         self::$controller->model_checkout_order->addOrderHistory(
             self::getOrderId(),
             !empty(self::$controller->config->get('payment_sanalpospro_order_status')) ? self::$controller->config->get('payment_sanalpospro_order_status') : 2,
-            self::$controller->language->get('payment_success') . ' Sanal Pos Pro ' . $payment_token
+            self::$controller->language->get('payment_success') . ' Sanal Pos Pro ' . $payment_token . ' ' . $flowType
         );
     }
 
